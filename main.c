@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+void display_manual();
+
 int main()
 {
     char input[1024];
@@ -35,9 +37,18 @@ int main()
         {
             break;
         }
+        else if (strcmp(command, "help") == 0)
+        {
+            display_manual();
+        }
         else
         {
             printf("<Invalid Command>\n");
         }
     }
+}
+
+void display_manual()
+{
+    printf("\nManual\n   exit - quit shell\n\n");
 }
