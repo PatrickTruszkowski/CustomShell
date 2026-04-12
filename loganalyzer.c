@@ -17,7 +17,8 @@ void usage() {
     printf("Usage: loganalyzer -f <file> [-p pattern]\n");
 }
 
-int main(int argc, char *argv[]) {
+void loganalyzer(int argc, char *argv[]) {
+    optind = 1;
     char *filename = NULL;
     char *pattern = NULL;
     int opt;
@@ -55,7 +56,7 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    int filesize = st.st_size;
+    size_t filesize = st.st_size;
 
     char *data = mmap(NULL, filesize, PROT_READ, MAP_PRIVATE, fd, 0);
     if (data == MAP_FAILED) {
@@ -64,8 +65,8 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    int lines = 0;
-    int matches = 0;
+    size_t lines = 0;
+    size_t matches = 0;
 
     for (int i = 0; i < filesize && !stop; i++) {
         if (data[i] == '\n') {
@@ -91,8 +92,8 @@ int main(int argc, char *argv[]) {
         printf("\n[!] Interrupted by user\n");
     }
 
+    printf("\n");
+
     munmap(data, filesize);
     close(fd);
-
-    return 0;
 }

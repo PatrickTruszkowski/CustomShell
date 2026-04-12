@@ -3,6 +3,7 @@
 #include <string.h>
 
 void display_manual();
+void loganalyzer(int argc, char* argv[]);
 
 int main()
 {
@@ -16,7 +17,7 @@ int main()
         input[strcspn(input, "\n")] = 0;
 
         char* tokens[64];
-        int tokenCount = 0;
+        size_t tokenCount = 0;
 
         char* token = strtok(input, " ");
 
@@ -41,14 +42,22 @@ int main()
         {
             display_manual();
         }
+        else if (strcmp(command, "loganalyzer") == 0)
+        {
+            loganalyzer(tokenCount, tokens);
+        }
         else
         {
-            printf("<Invalid Command>\n");
+            printf("\n<Invalid Command>\n\n");
         }
     }
 }
 
 void display_manual()
 {
-    printf("\nManual\n   exit - quit shell\n\n");
+    printf("\nManual\n");
+    printf("   exit - quit shell\n");
+    printf("   loganalyzer -f <file> -p <pattern> - parse log file\n");
+
+    printf("\n");
 }
