@@ -1,13 +1,10 @@
 NAME
-    loganalyzer - analyze large log files efficiently using mmap
-
-SYNOPSIS
-    loganalyzer -f file [-p pattern]
+loganalyzer
 
 DESCRIPTION
-    Parses large log files and reports statistics such as line count
-    and pattern occurrences using memory-mapped I/O.
+Parses large log files and reports statistics including line count
+and pattern occurrences using mmap.
 
-OPTIONS
-    -f file     Input log file
-    -p pattern  Search pattern
+FLAGS:
+-f file     Input log file
+-p pattern  Search pattern
