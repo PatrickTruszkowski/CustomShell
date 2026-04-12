@@ -1,0 +1,15 @@
+NAME
+timedexec
+
+DESCRIPTION
+Runs another program with CPU, memory, and wall-clock limits.
+Stops the program if it uses too much time or memory and prints
+a short execution report. Uses poll, wait4, setrlimit, and signals.
+
+FLAGS:
+-c sec      CPU time limit in seconds
+-m mb       Memory limit in MB
+-t sec      Wall-clock timeout in seconds
+-g sec      Grace time before SIGKILL
+-q          Quiet mode
+-h          Show help
