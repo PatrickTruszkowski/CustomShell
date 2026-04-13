@@ -1,0 +1,16 @@
+NAME
+filediffadvanced
+
+DESCRIPTION
+Compares two files for textual or binary differences and reports
+performance metrics including byte-level or line-level diff results
+and elapsed time. Uses mmap for fast file access and pthreads for
+parallel binary comparison. Auto-detects whether files are text or
+binary if no mode flag is given.
+
+FLAGS:
+-f file     First input file
+-s file     Second input file
+-b          Force binary comparison mode
+-t          Force text comparison mode
+-h          Show help
