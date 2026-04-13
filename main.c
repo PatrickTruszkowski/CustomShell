@@ -4,6 +4,7 @@
 
 void display_manual();
 void loganalyzer(int argc, char* argv[]);
+void timedexec(int argc, char* argv[]);
 
 int main()
 {
@@ -46,6 +47,10 @@ int main()
         {
             loganalyzer(tokenCount, tokens);
         }
+        else if (strcmp(command, "timedexec") == 0)
+        {
+            timedexec(tokenCount, tokens);
+        }
         else
         {
             printf("\n<Invalid Command>\n\n");
@@ -58,6 +63,7 @@ void display_manual()
     printf("\nManual\n");
     printf("   exit - quit shell\n");
     printf("   loganalyzer -f <file> -p <pattern> - parse log file\n");
+    printf("   timedexec -c <sec> -m <mb> -t <sec> -g <sec> -q -- command <args...> - runs command and terminates if limits exceed\n");
 
     printf("\n");
 }

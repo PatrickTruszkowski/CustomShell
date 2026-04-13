@@ -27,11 +27,12 @@ void handle_signal(int sig) {
     }
 }
 
-void usage(void) {
+void timedexec_usage(void) {
     printf("Usage: timedexec [-c sec] [-m mb] [-t sec] [-g sec] [-q] -- command [args...]\n");
 }
 
-int main(int argc, char *argv[]) {
+void timedexec(int argc, char *argv[]) {
+    optind = 1;
     int cpu_limit = 0, mem_limit = 0, wall_limit = 0, grace = 2, quiet = 0;
     int opt, status = 0, exec_pipe[2], child_error = 0, timeout = 0;
     struct timespec start, now;
@@ -46,14 +47,18 @@ int main(int argc, char *argv[]) {
             case 't': wall_limit = atoi(optarg); break;
             case 'g': grace = atoi(optarg); break;
             case 'q': quiet = 1; break;
-            case 'h': usage(); return 0;
-            default: usage(); return 1;
+            case 'h':
+                timedexec_usage();
+                return;
+            default:
+                timedexec_usage();
+                return;
         }
     }
 
     if (optind >= argc || cpu_limit < 0 || mem_limit < 0 || wall_limit < 0 || grace <= 0) {
-        usage();
-        return 1;
+        timedexec_usage();
+        return;
     }
 
     signal(SIGINT, handle_signal);
@@ -61,7 +66,7 @@ int main(int argc, char *argv[]) {
 
     if (pipe(sig_pipe) == -1 || pipe(exec_pipe) == -1) {
         perror("pipe");
-        return 1;
+        return;
     }
 
     fcntl(sig_pipe[0], F_SETFL, O_NONBLOCK);
@@ -69,13 +74,13 @@ int main(int argc, char *argv[]) {
 
     if (clock_gettime(CLOCK_MONOTONIC, &start) == -1) {
         perror("clock_gettime");
-        return 1;
+        return;
     }
 
     child_pid = fork();
     if (child_pid < 0) {
         perror("fork");
-        return 1;
+        return;
     }
 
     if (child_pid == 0) {
@@ -124,7 +129,7 @@ int main(int argc, char *argv[]) {
         done = wait4(child_pid, &status, WNOHANG, &usage_info);
         if (done == -1) {
             perror("wait4");
-            return 1;
+            return;
         }
         if (done == child_pid) {
             break;
@@ -158,7 +163,7 @@ int main(int argc, char *argv[]) {
 
         if (poll(fds, 2, wait_ms) == -1 && errno != EINTR) {
             perror("poll");
-            return 1;
+            return;
         }
 
         if (fds[1].revents & POLLIN) {
@@ -211,9 +216,9 @@ int main(int argc, char *argv[]) {
     close(sig_pipe[0]);
     close(sig_pipe[1]);
 
-    if (timeout) return 124;
-    if (last_signal) return 128 + last_signal;
-    if (WIFEXITED(status)) return WEXITSTATUS(status);
-    if (WIFSIGNALED(status)) return 128 + WTERMSIG(status);
-    return 1;
+    if (timeout) return;
+    if (last_signal) return;
+    if (WIFEXITED(status)) return;
+    if (WIFSIGNALED(status)) return;
+    return;
 }
