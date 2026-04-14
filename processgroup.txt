@@ -1,0 +1,15 @@
+NAME
+processgroup
+
+DESCRIPTION
+Manages a group of processes by creating multiple child processes and assigning them
+to a single process group. Allows collective signal handling by sending a signal to the
+entire group at once. Each child process runs independently, while the parent monitors execution
+and terminates all processes after a specified delay. Uses fork(), setpgid(), kill(), and waitpid()
+for process control and group management.
+
+FLAGS:
+-n num    Number of processes to create
+-d sec    Delay before sending signal (seconds)
+-s sig    Signal to send to process group (default: SIGTERM)
+-h        Show help
