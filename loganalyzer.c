@@ -1,153 +1,99 @@
-#define _GNU_SOURCE
-#define _POSIX_C_SOURCE 200809L
-
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <signal.h>
 #include <string.h>
-#include <sys/wait.h>
-#include <errno.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <signal.h>
 
-volatile sig_atomic_t interrupted = 0;
+volatile sig_atomic_t stop = 0;
 
-void handle_signal(int sig) {
-    interrupted = sig;
+void handle_sigint(int sig) {
+    stop = 1;
 }
 
-void usage(void) {
-    printf("Usage: processgroup [-n processes] [-d seconds] [-s signal]\n");
-    printf("Example: processgroup -n 3 -d 5 -s 15\n");
+void usage() {
+    printf("Usage: loganalyzer -f <file> [-p pattern]\n");
 }
 
-void processgroup(int argc, char *argv[]) {
+void loganalyzer(int argc, char *argv[]) {
     optind = 1;
-
-    int num_processes = 3;
-    int delay = 5;
-    int sig_to_send = SIGTERM;
+    char *filename = NULL;
+    char *pattern = NULL;
     int opt;
-    pid_t group_id = 0;
-    pid_t *child_pids = NULL;
 
-    while ((opt = getopt(argc, argv, "n:d:s:h")) != -1) {
+    while ((opt = getopt(argc, argv, "f:p:")) != -1) {
         switch (opt) {
-            case 'n':
-                num_processes = atoi(optarg);
+            case 'f':
+                filename = optarg;
                 break;
-            case 'd':
-                delay = atoi(optarg);
+            case 'p':
+                pattern = optarg;
                 break;
-            case 's':
-                sig_to_send = atoi(optarg);
-                break;
-            case 'h':
-                usage();
-                return;
             default:
                 usage();
-                return;
+                exit(EXIT_FAILURE);
         }
     }
 
-    if (num_processes <= 0 || delay < 0) {
-        usage();
-        return;
+    if (!filename) {
+        exit(EXIT_FAILURE);
     }
 
-    signal(SIGINT, handle_signal);
-    signal(SIGTERM, handle_signal);
+    signal(SIGINT, handle_sigint);
 
-    child_pids = malloc(num_processes * sizeof(pid_t));
-    if (child_pids == NULL) {
-        perror("malloc");
-        return;
+    int fd = open(filename, O_RDONLY);
+    if (fd < 0) {
+        perror("open");
+        exit(EXIT_FAILURE);
     }
 
-    printf("Creating %d child processes...\n", num_processes);
+    struct stat st;
+    if (fstat(fd, &st) < 0) {
+        perror("fstat");
+        close(fd);
+        exit(EXIT_FAILURE);
+    }
 
-    for (int i = 0; i < num_processes; i++) {
-        pid_t pid = fork();
+    size_t filesize = st.st_size;
 
-        if (pid < 0) {
-            perror("fork");
-            free(child_pids);
-            return;
+    char *data = mmap(NULL, filesize, PROT_READ, MAP_PRIVATE, fd, 0);
+    if (data == MAP_FAILED) {
+        perror("mmap");
+        close(fd);
+        exit(EXIT_FAILURE);
+    }
+
+    size_t lines = 0;
+    size_t matches = 0;
+
+    for (int i = 0; i < filesize && !stop; i++) {
+        if (data[i] == '\n') {
+            lines++;
         }
 
-        if (pid == 0) {
-            if (i == 0) {
-                if (setpgid(0, 0) == -1) {
-                    perror("setpgid");
-                    exit(EXIT_FAILURE);
-                }
-            } else {
-                if (setpgid(0, group_id) == -1) {
-                    perror("setpgid");
-                    exit(EXIT_FAILURE);
-                }
-            }
-
-            printf("Child %d started | PID = %d | PGID = %d\n", i + 1, getpid(), getpgrp());
-
-            execlp("sleep", "sleep", "30", NULL);
-            perror("execlp");
-            exit(EXIT_FAILURE);
-        } else {
-            child_pids[i] = pid;
-
-            if (i == 0) {
-                group_id = pid;
-                if (setpgid(pid, pid) == -1 && errno != EACCES) {
-                    perror("setpgid");
-                }
-            } else {
-                if (setpgid(pid, group_id) == -1 && errno != EACCES) {
-                    perror("setpgid");
-                }
+        if (pattern) {
+            if (i + strlen(pattern) < filesize &&
+                strncmp(&data[i], pattern, strlen(pattern)) == 0) {
+                matches++;
             }
         }
     }
 
-    printf("\nProcess Group ID: %d\n", group_id);
-    printf("Waiting %d seconds before sending signal %d...\n", delay, sig_to_send);
+    printf("\n----- Results -----\n");
+    printf("Total Lines: %zu\n", lines);
 
-    sleep(delay);
-
-    if (kill(-group_id, sig_to_send) == -1) {
-        perror("kill");
-    } else {
-        printf("Signal %d sent to process group %d\n", sig_to_send, group_id);
+    if (pattern) {
+        printf("Occurrences of '%s': %zu\n", pattern, matches);
     }
 
-    for (int i = 0; i < num_processes; i++) {
-        int status;
-        pid_t ended = waitpid(child_pids[i], &status, 0);
-
-        if (ended > 0) {
-            if (WIFSIGNALED(status)) {
-                printf("Child PID %d terminated by signal %d\n", ended, WTERMSIG(status));
-            } else if (WIFEXITED(status)) {
-                printf("Child PID %d exited with code %d\n", ended, WEXITSTATUS(status));
-            }
-        }
-    }
-
-    printf("\n----- processgroup Results -----\n");
-    printf("Processes Created: %d\n", num_processes);
-    printf("Process Group ID: %d\n", group_id);
-    printf("Signal Sent: %d\n", sig_to_send);
-
-    if (interrupted) {
-        printf("Interrupted by user signal %d\n", interrupted);
+    if (stop) {
+        printf("\n[!] Interrupted by user\n");
     }
 
     printf("\n");
 
-    free(child_pids);
-}
-
-int main(int argc, char *argv[]) {
-    processgroup(argc, argv);
-    return 0;
+    munmap(data, filesize);
+    close(fd);
 }
