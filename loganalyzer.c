@@ -13,7 +13,7 @@ void handle_sigint(int sig) {
     stop = 1;
 }
 
-void usage() {
+void loganalyzer_usage() {
     printf("Usage: loganalyzer -f <file> [-p pattern]\n");
 }
 
@@ -32,7 +32,7 @@ void loganalyzer(int argc, char *argv[]) {
                 pattern = optarg;
                 break;
             default:
-                usage();
+                loganalyzer_usage();
                 exit(EXIT_FAILURE);
         }
     }
