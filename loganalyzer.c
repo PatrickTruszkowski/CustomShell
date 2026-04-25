@@ -7,10 +7,10 @@
 #include <sys/stat.h>
 #include <signal.h>
 
-volatile sig_atomic_t stop = 0;
+volatile sig_atomic_t loganalyzer_stop = 0;
 
 void handle_sigint(int sig) {
-    stop = 1;
+    loganalyzer_stop = 1;
 }
 
 void loganalyzer_usage() {
@@ -68,7 +68,8 @@ void loganalyzer(int argc, char *argv[]) {
     size_t lines = 0;
     size_t matches = 0;
 
-    for (int i = 0; i < filesize && !stop; i++) {
+    for (int i = 0; i < filesize && !loganalyzer_stop; i++)
+    {
         if (data[i] == '\n') {
             lines++;
         }
@@ -88,7 +89,8 @@ void loganalyzer(int argc, char *argv[]) {
         printf("Occurrences of '%s': %zu\n", pattern, matches);
     }
 
-    if (stop) {
+    if (loganalyzer_stop)
+    {
         printf("\n[!] Interrupted by user\n");
     }
 

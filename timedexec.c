@@ -19,7 +19,7 @@ volatile sig_atomic_t child_pid = -1;
 volatile sig_atomic_t last_signal = 0;
 int sig_pipe[2] = {-1, -1};
 
-void handle_signal(int sig) {
+void timedexec_handle_signal(int sig) {
     unsigned char ch = (unsigned char)sig;
     last_signal = sig;
     if (sig_pipe[1] != -1) {
@@ -61,8 +61,8 @@ void timedexec(int argc, char *argv[]) {
         return;
     }
 
-    signal(SIGINT, handle_signal);
-    signal(SIGTERM, handle_signal);
+    signal(SIGINT, timedexec_handle_signal);
+    signal(SIGTERM, timedexec_handle_signal);
 
     if (pipe(sig_pipe) == -1 || pipe(exec_pipe) == -1) {
         perror("pipe");

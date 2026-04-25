@@ -11,10 +11,11 @@
 #include <pthread.h>
 #include <time.h>
 
-volatile sig_atomic_t stop = 0;
+volatile sig_atomic_t filediffadvanced_stop = 0;
 
-void handle_sigint(int sig) {
-    stop = 1;
+void filediffadvanced_handle_sigint(int sig)
+{
+    filediffadvanced_stop = 1;
 }
 
 void filediffadvanced_usage() {
@@ -35,7 +36,8 @@ typedef struct {
 void *compare_chunk(void *arg) {
     ThreadArg *t = (ThreadArg *)arg;
     t->diffs = 0;
-    for (size_t i = t->start; i < t->end && !stop; i++) {
+    for (size_t i = t->start; i < t->end && !filediffadvanced_stop; i++)
+    {
         if (t->data1[i] != t->data2[i])
             t->diffs++;
     }
@@ -63,7 +65,7 @@ void filediffadvanced(int argc, char *argv[]) {
         return;
     }
 
-    signal(SIGINT, handle_sigint);
+    signal(SIGINT, filediffadvanced_handle_sigint);
 
     /* open and mmap file 1 */
     int fd1 = open(file1, O_RDONLY);
@@ -149,7 +151,8 @@ void filediffadvanced(int argc, char *argv[]) {
         size_t line = 1, diffs = 0;
         size_t i = 0, j = 0;
 
-        while (i < size1 && j < size2 && !stop) {
+        while (i < size1 && j < size2 && !filediffadvanced_stop)
+        {
             size_t ei = i, ej = j;
             while (ei < size1 && data1[ei] != '\n') ei++;
             while (ej < size2 && data2[ej] != '\n') ej++;
@@ -182,7 +185,7 @@ void filediffadvanced(int argc, char *argv[]) {
                    + (t_end.tv_nsec - t_start.tv_nsec) / 1e9;
     printf("Time elapsed: %.4f sec\n", elapsed);
 
-    if (stop)
+    if (filediffadvanced_stop)
         printf("[!] Interrupted by user\n");
 
     printf("\n");

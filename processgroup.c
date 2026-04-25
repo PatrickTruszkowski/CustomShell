@@ -11,7 +11,7 @@
 
 volatile sig_atomic_t interrupted = 0;
 
-void handle_signal(int sig) {
+void processgroup_handle_signal(int sig) {
     interrupted = sig;
 }
 
@@ -55,8 +55,8 @@ void processgroup(int argc, char* argv[]) {
         return;
     }
 
-    signal(SIGINT, handle_signal);
-    signal(SIGTERM, handle_signal);
+    signal(SIGINT, processgroup_handle_signal);
+    signal(SIGTERM, processgroup_handle_signal);
 
     child_pids = malloc(num_processes * sizeof(pid_t));
     if (child_pids == NULL) {
@@ -150,9 +150,4 @@ void processgroup(int argc, char* argv[]) {
     printf("\n");
 
     free(child_pids);
-}
-
-int main(int argc, char* argv[]) {
-    processgroup(argc, argv);
-    return 0;
 }

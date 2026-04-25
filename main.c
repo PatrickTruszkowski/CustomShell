@@ -5,6 +5,8 @@
 void display_manual();
 void loganalyzer(int argc, char* argv[]);
 void timedexec(int argc, char* argv[]);
+void processgroup(int argc, char* argv[]);
+void filediffadvanced(int argc, char* argv[]);
 
 int main()
 {
@@ -51,6 +53,14 @@ int main()
         {
             timedexec(tokenCount, tokens);
         }
+        else if (strcmp(command, "processgroup") == 0)
+        {
+            processgroup(tokenCount, tokens);
+        }
+        else if (strcmp(command, "filediffadvanced") == 0)
+        {
+            filediffadvanced(tokenCount, tokens);
+        }
         else
         {
             printf("\n<Invalid Command>\n\n");
@@ -64,6 +74,8 @@ void display_manual()
     printf("   exit - quit shell\n");
     printf("   loganalyzer -f <file> -p <pattern> - parse log file\n");
     printf("   timedexec -c <sec> -m <mb> -t <sec> -g <sec> -q -- command <args...> - runs command and terminates if limits exceed\n");
+    printf("   processgroup -n <pcount> -d <waitsec> -s <signum> -h <show usage> - manages a group of processes\n");
+    printf("   filediffadvanced -f <file1> -s <file2> -b <bin cmp> -t <txt cmp> -h <show usage> - compares two files for textual or binary differences\n");
 
     printf("\n");
 }
